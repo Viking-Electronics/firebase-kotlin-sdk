@@ -225,6 +225,7 @@ actual open class Query(open val ios: FIRQuery) {
     actual suspend fun get() = QuerySnapshot(awaitResult { ios.getDocumentsWithCompletion(it) })
 
     actual fun limit(limit: Number) = Query(ios.queryLimitedTo(limit.toLong()))
+    actual fun limitToLast(limit: Number): Query = Query(ios.queryLimitedToLast(limit.toLong()))
 
     actual val snapshots get() = callbackFlow<QuerySnapshot> {
         val listener = ios.addSnapshotListener { snapshot, error ->
@@ -272,7 +273,14 @@ actual open class Query(open val ios: FIRQuery) {
 
     internal actual fun _orderBy(field: FieldPath, direction: Direction) = Query(ios.queryOrderedByFieldPath(field.ios, direction == Direction.DESCENDING))
 
+
+    internal actual fun _startAfter(vararg fields: FieldValue): Query = Query(ios.queryStartingAfterValues(listOf(fields)))
+    internal actual fun _startAfter(snapshot: DocumentSnapshot): Query = Query(ios.queryStartingAfterDocument(snapshot.ios))
+
+    internal actual fun _startAt(vararg fields: FieldValue): Query = Query(ios.queryStartingAtValues(listOf(fields)))
+    internal actual fun _startAt(snapshot: DocumentSnapshot): Query = Query(ios.queryStartingAtDocument(snapshot.ios))
 }
+
 @Suppress("UNCHECKED_CAST")
 actual class CollectionReference(override val ios: FIRCollectionReference) : Query(ios) {
 

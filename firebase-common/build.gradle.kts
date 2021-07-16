@@ -50,11 +50,13 @@ kotlin {
 
     }
 
-    if (project.extra["ideaActive"] as Boolean) {
-        iosX64("ios", nativeTargetConfig())
-    } else {
-        ios(configure = nativeTargetConfig())
-    }
+    val iosTarget: (String, KotlinNativeTarget.() -> Unit) -> KotlinNativeTarget =
+        if (System.getenv("SDK_NAME")?.startsWith("iphoneos") == true)
+            ::iosArm64
+        else
+            ::iosX64
+
+    iosTarget("ios", nativeTargetConfig())
 
     js {
         useCommonJs()
@@ -89,13 +91,13 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.2.0")
+                api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.2.1")
             }
         }
 
         val androidMain by getting {
             dependencies {
-                api("com.google.firebase:firebase-common:19.5.0")
+                api("com.google.firebase:firebase-common:20.0.0")
             }
         }
 

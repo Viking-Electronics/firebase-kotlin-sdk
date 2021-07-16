@@ -94,11 +94,13 @@ kotlin {
         }
     }
 
-    if (project.extra["ideaActive"] as Boolean) {
-        iosX64("ios", nativeTargetConfig())
-    } else {
-        ios(configure = nativeTargetConfig())
-    }
+    val iosTarget: (String, KotlinNativeTarget.() -> Unit) -> KotlinNativeTarget =
+        if (System.getenv("SDK_NAME")?.startsWith("iphoneos") == true)
+            ::iosArm64
+        else
+            ::iosX64
+
+    iosTarget("ios", nativeTargetConfig())
 
     js {
         useCommonJs()

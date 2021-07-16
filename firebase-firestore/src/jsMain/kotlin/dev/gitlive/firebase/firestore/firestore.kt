@@ -282,6 +282,7 @@ actual open class Query(open val js: firebase.firestore.Query) {
     actual suspend fun get() =  rethrow { QuerySnapshot(js.get().await()) }
 
     actual fun limit(limit: Number) = Query(js.limit(limit.toDouble()))
+    actual fun limitToLast(limit: Number): Query = Query(js.limitToLast(limit.toDouble()))
 
     internal actual fun _where(field: String, equalTo: Any?) = rethrow { Query(js.where(field, "==", equalTo)) }
     internal actual fun _where(path: FieldPath, equalTo: Any?) = rethrow { Query(js.where(path.js, "==", equalTo)) }
@@ -338,6 +339,14 @@ actual open class Query(open val js: firebase.firestore.Query) {
         }
         awaitClose { rethrow { unsubscribe() } }
     }
+
+    internal actual fun _startAfter(vararg fields: FieldValue): Query = Query(js.startAfter(fields))
+
+    internal actual fun _startAfter(snapshot: DocumentSnapshot): Query = Query(js.startAfter(snapshot))
+
+    internal actual fun _startAt(vararg fields: FieldValue): Query = Query(js.startAt(fields))
+
+    internal actual fun _startAt(snapshot: DocumentSnapshot): Query = Query(js.startAt(snapshot))
 }
 
 actual class CollectionReference(override val js: firebase.firestore.CollectionReference) : Query(js) {

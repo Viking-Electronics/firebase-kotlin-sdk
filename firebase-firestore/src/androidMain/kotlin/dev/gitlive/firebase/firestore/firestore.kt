@@ -6,7 +6,6 @@
 package dev.gitlive.firebase.firestore
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import dev.gitlive.firebase.*
 import kotlinx.coroutines.channels.awaitClose
@@ -25,10 +24,10 @@ internal fun <T> decode(strategy: DeserializationStrategy<T>, value: Any?): T =
 
 @PublishedApi
 internal inline fun <reified T> encode(value: T, shouldEncodeElementDefault: Boolean) =
-    encode(value, shouldEncodeElementDefault, FieldValue.serverTimestamp())
+    encode(value, shouldEncodeElementDefault, com.google.firebase.firestore.FieldValue.serverTimestamp())
 
 private fun <T> encode(strategy: SerializationStrategy<T> , value: T, shouldEncodeElementDefault: Boolean): Any? =
-    encode(strategy, value, shouldEncodeElementDefault, FieldValue.serverTimestamp())
+    encode(strategy, value, shouldEncodeElementDefault, com.google.firebase.firestore.FieldValue.serverTimestamp())
 
 actual val Firebase.firestore get() =
     FirebaseFirestore(com.google.firebase.firestore.FirebaseFirestore.getInstance())
@@ -309,6 +308,7 @@ actual open class Query(open val android: com.google.firebase.firestore.Query) {
     actual suspend fun get() = QuerySnapshot(android.get().await())
 
     actual fun limit(limit: Number) = Query(android.limit(limit.toLong()))
+    actual fun limitToLast(limit: Number): Query = Query(android.limitToLast(limit.toLong()))
 
     actual val snapshots get() = callbackFlow<QuerySnapshot> {
         val listener = android.addSnapshotListener { snapshot, exception ->
@@ -354,6 +354,13 @@ actual open class Query(open val android: com.google.firebase.firestore.Query) {
 
     internal actual fun _orderBy(field: String, direction: Direction) = Query(android.orderBy(field, direction))
     internal actual fun _orderBy(field: FieldPath, direction: Direction) = Query(android.orderBy(field.android, direction))
+
+
+    internal actual fun _startAfter(vararg fields: FieldValue): Query = Query(android.startAfter(fields))
+    internal actual fun _startAfter(snapshot: DocumentSnapshot): Query = Query(android.startAfter(snapshot))
+
+    internal actual fun _startAt(vararg fields: FieldValue): Query = Query(android.startAt(fields))
+    internal actual fun _startAt(snapshot: DocumentSnapshot): Query = Query(android.startAt(snapshot))
 }
 
 actual typealias Direction = com.google.firebase.firestore.Query.Direction

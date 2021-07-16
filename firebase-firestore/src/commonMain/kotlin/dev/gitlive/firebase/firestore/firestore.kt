@@ -54,6 +54,7 @@ expect class Transaction {
 
 expect open class Query {
     fun limit(limit: Number): Query
+    fun limitToLast(limit: Number): Query
     val snapshots: Flow<QuerySnapshot>
     suspend fun get(): QuerySnapshot
     internal fun _where(field: String, equalTo: Any?): Query
@@ -67,6 +68,11 @@ expect open class Query {
 
     internal fun _orderBy(field: String, direction: Direction): Query
     internal fun _orderBy(field: FieldPath, direction: Direction): Query
+
+    internal fun _startAfter(vararg fields: FieldValue): Query
+    internal fun _startAfter(snapshot: DocumentSnapshot): Query
+    internal fun _startAt(vararg fields: FieldValue): Query
+    internal fun _startAt(snapshot: DocumentSnapshot): Query
 }
 
 fun Query.where(field: String, equalTo: Any?) = _where(field, equalTo)
@@ -80,6 +86,11 @@ fun Query.where(path: FieldPath, inArray: List<Any>? = null, arrayContainsAny: L
 
 fun Query.orderBy(field: String, direction: Direction = Direction.ASCENDING) = _orderBy(field, direction)
 fun Query.orderBy(field: FieldPath, direction: Direction = Direction.ASCENDING) = _orderBy(field, direction)
+
+fun Query.startAfter(fields: List<FieldValue>): Query = _startAfter(*fields.toTypedArray())
+fun Query.startAfter(snapshot: DocumentSnapshot): Query = _startAfter(snapshot)
+fun Query.startAt(fields: List<FieldValue>): Query = _startAt(*fields.toTypedArray())
+fun Query.startAt(snapshot: DocumentSnapshot): Query = _startAt(snapshot)
 
 expect class WriteBatch {
     inline fun <reified T> set(documentRef: DocumentReference, data: T, encodeDefaults: Boolean = true, merge: Boolean = false): WriteBatch
