@@ -3,6 +3,7 @@
  */
 
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.konan.target.KonanTarget
 
 version = project.property("firebase-firestore.version") as String
 
@@ -53,8 +54,19 @@ kotlin {
 
     fun nativeTargetConfig(): KotlinNativeTarget.() -> Unit = {
         val nativeFrameworkPaths = listOf(
-            rootProject.project("firebase-app").projectDir.resolve("src/nativeInterop/cinterop/Carthage/Build/iOS"),
-            projectDir.resolve("src/nativeInterop/cinterop/Carthage/Build/iOS")
+            rootProject.project("firebase-app").projectDir.resolve("src/nativeInterop/cinterop/Carthage/Build/iOS")
+        ).plus(
+            listOf(
+                "abseil",
+                "BoringSSL-GRPC",
+                "FirebaseFirestore",
+                "gRPC-Core",
+                "leveldb-library"
+            ).map {
+                val archVariant = if (konanTarget is KonanTarget.IOS_X64) "ios-arm64_i386_x86_64-simulator" else "ios-arm64_armv7"
+
+                projectDir.resolve("src/nativeInterop/cinterop/Carthage/Build/$it.xcframework/$archVariant")
+            }
         )
 
         binaries {
@@ -72,11 +84,6 @@ kotlin {
         }
     }
 
-//    if (project.extra["ideaActive"] as Boolean) {
-//        iosX64("ios", nativeTargetConfig())
-//    } else {
-//        ios(configure = nativeTargetConfig())
-//    }
 
     val iosTarget: (String, KotlinNativeTarget.() -> Unit) -> KotlinNativeTarget =
         if (System.getenv("SDK_NAME")?.startsWith("iphoneos") == true)
@@ -124,7 +131,7 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
-                api("com.google.firebase:firebase-firestore:23.0.2")
+                api("com.google.firebase:firebase-firestore:23.0.1")
             }
         }
 
