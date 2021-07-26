@@ -1,0 +1,5 @@
+language = Objective-C
+package = cocoapods.FirebaseStorage
+modules = FirebaseStorage
+compilerOpts = -framework FirebaseStorage
+linkerOpts = -framework FirebaseStorage -framework GTMSessionFetcher

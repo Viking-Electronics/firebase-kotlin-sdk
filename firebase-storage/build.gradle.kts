@@ -1,30 +1,21 @@
-/*
- * Copyright (c) 2020 GitLive Ltd.  Use of this source code is governed by the Apache 2.0 license.
- */
-
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
-version = project.property("firebase-config.version") as String
-
 plugins {
-    id("com.android.library")
     kotlin("multiplatform")
-    //id("com.quittle.android-emulator") version "0.2.0"
+    id("com.android.library")
 }
+
+version = project.property("firebase-storage.version") as String
 
 android {
     compileSdkVersion(property("targetSdkVersion") as Int)
     defaultConfig {
         minSdkVersion(property("minSdkVersion") as Int)
         targetSdkVersion(property("targetSdkVersion") as Int)
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     sourceSets {
         getByName("main") {
             manifest.srcFile("src/androidMain/AndroidManifest.xml")
-        }
-        getByName("androidTest"){
-            java.srcDir(file("src/androidAndroidTest/kotlin"))
         }
     }
     testOptions {
@@ -42,49 +33,16 @@ android {
     }
 }
 
-// Optional configuration
-//androidEmulator {
-//    emulator {
-//        name("givlive_emulator")
-//        sdkVersion(28)
-//        abi("x86_64")
-//        includeGoogleApis(true) // Defaults to false
-//
-//    }
-//    headless(false)
-//    logEmulatorOutput(false)
-//}
-
 kotlin {
 
-    android {
+    android() {
         publishAllLibraryVariants()
     }
 
     fun nativeTargetConfig(): KotlinNativeTarget.() -> Unit = {
         val nativeFrameworkPaths = listOf(
-            "FirebaseCore",
-            "FirebaseCoreDiagnostics",
-            "FirebaseAnalytics",
-            "GoogleAppMeasurement",
-            "FirebaseInstallations",
-            "GoogleDataTransport",
-            "GoogleUtilities",
-            "PromisesObjC",
-            "nanopb"
-        ).map {
-            val archVariant =
-                if (konanTarget is org.jetbrains.kotlin.konan.target.KonanTarget.IOS_X64) "ios-arm64_i386_x86_64-simulator" else "ios-arm64_armv7"
-            rootProject.project("firebase-app").projectDir.resolve("src/nativeInterop/cinterop/Carthage/Build/$it.xcframework/$archVariant")
-        }.plus(
-            listOf(
-                "FirebaseABTesting",
-                "FirebaseRemoteConfig"
-            ).map {
-                val archVariant =
-                    if (konanTarget is org.jetbrains.kotlin.konan.target.KonanTarget.IOS_X64) "ios-arm64_i386_x86_64-simulator" else "ios-arm64_armv7"
-                projectDir.resolve("src/nativeInterop/cinterop/Carthage/Build/$it.xcframework/$archVariant")
-            }
+            rootProject.project("firebase-app").projectDir.resolve("src/nativeInterop/cinterop/Carthage/Build/iOS"),
+            projectDir.resolve("src/nativeInterop/cinterop/Carthage/Build/iOS")
         )
 
         binaries {
@@ -95,7 +53,7 @@ kotlin {
         }
 
         compilations.getByName("main") {
-            cinterops.create("FirebaseRemoteConfig") {
+            cinterops.create("FirebaseStorage") {
                 compilerOpts(nativeFrameworkPaths.map { "-F$it" })
                 extraOpts("-verbose")
             }
@@ -110,12 +68,20 @@ kotlin {
 
     iosTarget("ios", nativeTargetConfig())
 
+
     js {
         useCommonJs()
+        nodejs {
+            testTask {
+                useMocha {
+                    timeout = "5s"
+                }
+            }
+        }
         browser {
             testTask {
-                useKarma {
-                    useChromeHeadless()
+                useMocha {
+                    timeout = "5s"
                 }
             }
         }
@@ -124,10 +90,12 @@ kotlin {
     sourceSets {
         all {
             languageSettings.apply {
-                apiVersion = "1.4"
-                languageVersion = "1.4"
+                apiVersion = "1.5"
+                languageVersion = "1.5"
                 progressiveMode = true
                 useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
+                useExperimentalAnnotation("kotlinx.coroutines.FlowPreview")
+                useExperimentalAnnotation("kotlinx.serialization.InternalSerializationApi")
             }
         }
 
@@ -140,7 +108,7 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
-                api("com.google.firebase:firebase-config-ktx:21.0.0")
+                implementation("com.google.firebase:firebase-storage-ktx:20.0.0")
             }
         }
 
@@ -150,9 +118,3 @@ kotlin {
     }
 }
 
-signing {
-    val signingKey: String? by project
-    val signingPassword: String? by project
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    sign(publishing.publications)
-}
