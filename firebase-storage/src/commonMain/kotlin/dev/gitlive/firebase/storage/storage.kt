@@ -108,7 +108,11 @@ expect class StorageReference {
     suspend fun list(maxResults: Int, pageToken: String? = null): ListResult
 }
 
-expect class URI
+expect class URI {
+    companion object {
+        fun fromString(stringUri: String): URI?
+    }
+}
 expect class Data
 expect class Error
 
@@ -132,17 +136,22 @@ expect class StorageMetadata {
     val creationTimeMillis: Long
     val updatedTimeMillis: Long
     val bucket: String?
-    val cacheControl: String?
-    val contentDisposition: String?
-    val contentEncoding: String?
-    val contentLanguage: String?
-    val contentType: String?
     val generation: String?
     val metadataGeneration: String?
     val md5Hash: String?
     val customMetadataKeys: Set<String>
 
+    var cacheControl: String?
+    var contentDisposition: String?
+    var contentEncoding: String?
+    var contentLanguage: String?
+    var contentType: String?
+
     fun getCustomMetadata(key: String): String?
+    fun setCustomMetadata(
+        key: String,
+        value: String?
+    )
 }
 
 expect class ListResult {

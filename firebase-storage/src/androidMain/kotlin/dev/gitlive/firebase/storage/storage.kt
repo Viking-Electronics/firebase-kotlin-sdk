@@ -215,12 +215,21 @@ actual class StorageReference internal constructor(val android: com.google.fireb
 
 actual typealias StreamProcessor = com.google.firebase.storage.StreamDownloadTask.StreamProcessor
 
-actual class URI internal constructor(val android: Uri)
+actual class URI internal constructor(val android: Uri) {
+    actual companion object {
+        actual fun fromString(stringUri: String): URI? = URI(Uri.parse(stringUri))
+    }
+}
 actual class Data internal constructor(val android: ByteArray)
 actual class Error
 
 
-actual class StorageMetadata internal constructor(val android: com.google.firebase.storage.StorageMetadata) {
+actual class StorageMetadata internal constructor(private val internal: com.google.firebase.storage.StorageMetadata) {
+    private var builder = com.google.firebase.storage.StorageMetadata.Builder(internal)
+
+    val android: com.google.firebase.storage.StorageMetadata
+        get() = builder.build()
+
     actual val name: String?
         get() = android.name
     actual val path: String?
@@ -235,16 +244,6 @@ actual class StorageMetadata internal constructor(val android: com.google.fireba
         get() = android.updatedTimeMillis
     actual val bucket: String?
         get() = android.bucket
-    actual val cacheControl: String?
-        get() = android.cacheControl
-    actual val contentDisposition: String?
-        get() = android.contentDisposition
-    actual val contentEncoding: String?
-        get() = android.contentEncoding
-    actual val contentLanguage: String?
-        get() = android.contentLanguage
-    actual val contentType: String?
-        get() = android.contentType
     actual val generation: String?
         get() = android.generation
     actual val metadataGeneration: String?
@@ -253,6 +252,36 @@ actual class StorageMetadata internal constructor(val android: com.google.fireba
         get() = android.md5Hash
     actual val customMetadataKeys: Set<String>
         get() = android.customMetadataKeys
+
+    actual var cacheControl: String?
+        get() = builder.cacheControl
+        set(value) {
+            builder = builder.setCacheControl(value)
+        }
+    actual var contentDisposition: String?
+        get() = builder.contentDisposition
+        set(value) {
+            builder = builder.setContentDisposition(value)
+        }
+    actual var contentEncoding: String?
+        get() = builder.contentEncoding
+        set(value) {
+            builder = builder.setContentEncoding(value)
+        }
+    actual var contentLanguage: String?
+        get() = builder.contentLanguage
+        set(value) {
+            builder = builder.setContentLanguage(value)
+        }
+    actual var contentType: String?
+        get() = builder.contentType
+        set(value) {
+            builder = builder.setContentType(value)
+        }
+
+    actual fun setCustomMetadata(key: String, value: String?) {
+        builder = builder.setCustomMetadata(key, value)
+    }
 
     actual fun getCustomMetadata(key: String): String? = android.getCustomMetadata(key)
 }

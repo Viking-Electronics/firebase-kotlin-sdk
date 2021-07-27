@@ -228,7 +228,12 @@ actual class StorageReference internal constructor(val ios: cocoapods.FirebaseSt
 
 actual interface StreamProcessor
 
-actual class URI internal constructor(val ios: NSURL)
+actual class URI internal constructor(val ios: NSURL) {
+    actual companion object {
+        actual fun fromString(stringUri: String): URI? = NSURL.URLWithString(stringUri)?.let { URI(it) }
+    }
+}
+
 actual class Error internal constructor(val ios: NSError)
 actual class Data internal constructor(val ios: NSData)
 
@@ -250,16 +255,6 @@ actual class StorageMetadata internal constructor(
         get() = ios.updated?.timeIntervalSinceReferenceDate?.toLong() ?: 0L
     actual val bucket: String?
         get() = ios.bucket
-    actual val cacheControl: String?
-        get() = ios.cacheControl
-    actual val contentDisposition: String?
-        get() = ios.contentDisposition
-    actual val contentEncoding: String?
-        get() = ios.contentEncoding
-    actual val contentLanguage: String?
-        get() = ios.contentLanguage
-    actual val contentType: String?
-        get() = ios.contentType
     actual val generation: String?
         get() = ios.generation.toString()
     actual val metadataGeneration: String?
@@ -269,7 +264,15 @@ actual class StorageMetadata internal constructor(
     actual val customMetadataKeys: Set<String>
         get() = ios.customMetadata?.keys as? Set<String>  ?: setOf()
 
+    actual var cacheControl: String? = ios.cacheControl
+    actual var contentDisposition: String? = ios.contentDisposition
+    actual var contentEncoding: String? = ios.contentEncoding
+    actual var contentLanguage: String? = ios.contentLanguage
+    actual var contentType: String? = ios.contentType
+
     actual fun getCustomMetadata(key: String): String? = ios.customMetadata?.get(key)?.toString()
+    actual fun setCustomMetadata(key: String, value: String?) = ios.setCustomMetadata(mapOf(key to value))
+
 }
 
 actual class ListResult internal constructor(val ios: cocoapods.FirebaseStorage.FIRStorageListResult) {
