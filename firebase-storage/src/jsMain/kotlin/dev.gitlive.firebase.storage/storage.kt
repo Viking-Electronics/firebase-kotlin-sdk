@@ -188,7 +188,14 @@ actual class StorageReference {
 
 }
 
-actual class URI
+actual class URI {
+    actual companion object {
+        actual fun fromString(stringUri: String): URI? {
+            TODO("Not yet implemented")
+        }
+    }
+}
+
 actual class Data
 actual class Error
 actual class StorageMetadata {
@@ -206,16 +213,6 @@ actual class StorageMetadata {
         get() = TODO("Not yet implemented")
     actual val bucket: String?
         get() = TODO("Not yet implemented")
-    actual val cacheControl: String?
-        get() = TODO("Not yet implemented")
-    actual val contentDisposition: String?
-        get() = TODO("Not yet implemented")
-    actual val contentEncoding: String?
-        get() = TODO("Not yet implemented")
-    actual val contentLanguage: String?
-        get() = TODO("Not yet implemented")
-    actual val contentType: String?
-        get() = TODO("Not yet implemented")
     actual val generation: String?
         get() = TODO("Not yet implemented")
     actual val metadataGeneration: String?
@@ -225,10 +222,29 @@ actual class StorageMetadata {
     actual val customMetadataKeys: Set<String>
         get() = TODO("Not yet implemented")
 
+    actual var cacheControl: String?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    actual var contentDisposition: String?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    actual var contentEncoding: String?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    actual var contentLanguage: String?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+    actual var contentType: String?
+        get() = TODO("Not yet implemented")
+        set(value) {}
+
     actual fun getCustomMetadata(key: String): String? {
         TODO("Not yet implemented")
     }
 
+    actual fun setCustomMetadata(key: String, value: String?) {
+        TODO("Not yet implemented")
+    }
 }
 
 actual class ListResult {
