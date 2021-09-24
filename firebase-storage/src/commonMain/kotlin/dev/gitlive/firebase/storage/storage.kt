@@ -36,7 +36,7 @@ expect class FirebaseStorage {
     var maxUploadRetryTime: Duration
 
     /** Creates a new StorageReference initialized at the root Firebase Storage location.   */
-    fun getReference(): StorageReference
+    val reference: StorageReference
     /** Creates a new StorageReference initialized with a child Firebase Storage location.   */
     fun getReference(location: String): StorageReference
     /** Creates a StorageReference given a gs:// or // URL pointing to a Firebase Storage location.   */
@@ -82,10 +82,6 @@ expect class StorageReference {
         scope: CoroutineScope,
         destination: URI,
         onComplete: (uri: URI?, error: Error?) -> Unit): FirebaseStorageJob.DownloadJob
-    suspend fun getStream(
-        scope: CoroutineScope,
-        processor: StreamProcessor? = null,
-        fallback: IosFallback.Download): FirebaseStorageJob.DownloadJob
 
     suspend fun putData(
         scope: CoroutineScope,
@@ -98,34 +94,15 @@ expect class StorageReference {
         metadata: StorageMetadata? = null,
         existingURI: URI? = null,
         onComplete: (metadata: StorageMetadata?, error: Error?) -> Unit): FirebaseStorageJob.UploadJob
-    suspend fun putStream(
-        scope: CoroutineScope,
-        inputStream: Any,
-        metadata: StorageMetadata? = null,
-        fallback: IosFallback.Upload): FirebaseStorageJob.UploadJob
 
     suspend fun listAll(): ListResult
     suspend fun list(maxResults: Int, pageToken: String? = null): ListResult
 }
 
-expect class URI {
-    companion object {
-        fun fromString(stringUri: String): URI?
-    }
-}
+
 expect class Data
 expect class Error
 
-sealed class IosFallback {
-    sealed class Upload(open val task: FirebaseStorageTask.Upload) {
-        class Data(override val task: FirebaseStorageTask.Upload.Data): Upload(task)
-        class File(override val task: FirebaseStorageTask.Upload.File): Upload(task)
-    }
-    sealed class Download(open val task: FirebaseStorageTask.Download) {
-        class Data(override val task: FirebaseStorageTask.Download.Data): Download(task)
-        class File(override val task: FirebaseStorageTask.Download.File): Download(task)
-    }
-}
 
 
 expect class StorageMetadata {
@@ -153,6 +130,8 @@ expect class StorageMetadata {
         value: String?
     )
 }
+
+expect fun storageMetadata(builder: StorageMetadata.() -> Unit): StorageMetadata
 
 expect class ListResult {
     val items: List<StorageReference>
@@ -193,7 +172,6 @@ expect sealed class FirebaseStorageTask {
 
         class Data: Upload
         class File: Upload
-        class Stream: Upload
     }
     sealed class Download: FirebaseStorageTask {
         class Data: Download
@@ -202,14 +180,6 @@ expect sealed class FirebaseStorageTask {
             open class DownloadSnapshot: FirebaseStorageSnapshotBase {
                 val totalBytes: Long
                 val bytesDownloaded: Long
-            }
-        }
-        class Stream: Download {
-            val snapshot: StreamDownloadSnapshot
-            class StreamDownloadSnapshot: FirebaseStorageSnapshotBase {
-                val totalBytes: Long
-                val bytesDownloaded: Long
-                val stream: Any?
             }
         }
     }

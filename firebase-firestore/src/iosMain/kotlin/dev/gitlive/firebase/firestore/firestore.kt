@@ -365,6 +365,7 @@ actual class QuerySnapshot(val ios: FIRQuerySnapshot) {
     actual val documentChanges
         get() = ios.documentChanges.map { DocumentChange(it as FIRDocumentChange) }
     actual val metadata: SnapshotMetadata get() = SnapshotMetadata(ios.metadata)
+    actual val isEmpty: Boolean = ios.empty
 }
 
 actual class DocumentChange(val ios: FIRDocumentChange) {

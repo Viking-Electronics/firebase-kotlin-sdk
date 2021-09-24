@@ -32,7 +32,7 @@ actual fun Firebase.storage(app: FirebaseApp, bucketUrl: String): FirebaseStorag
 
 @OptIn(ExperimentalTime::class)
 actual class FirebaseStorage internal constructor(val android: com.google.firebase.storage.FirebaseStorage){
-   internal actual val _activeDownloadJobs = mutableListOf<FirebaseStorageJob.DownloadJob>()
+    internal actual val _activeDownloadJobs = mutableListOf<FirebaseStorageJob.DownloadJob>()
     internal actual val _activeUploadJobs = mutableListOf<FirebaseStorageJob.UploadJob>()
 
     internal actual val jobHandler = object: JobHandler {
@@ -76,7 +76,8 @@ actual class FirebaseStorage internal constructor(val android: com.google.fireba
         }
 
     /** Creates a new StorageReference initialized at the root Firebase Storage location.   */
-    actual fun getReference(): StorageReference = StorageReference(android.reference)
+    actual val reference: StorageReference
+        get() = StorageReference(android.reference)
 
     /** Creates a new StorageReference initialized with a child Firebase Storage location.   */
     actual fun getReference(location: String): StorageReference = StorageReference(android.getReference(location))
@@ -88,7 +89,7 @@ actual class FirebaseStorage internal constructor(val android: com.google.fireba
     actual fun useEmulator(host: String, port: Int) = android.useEmulator(host, port)
 }
 
-actual class StorageReference internal constructor(val android: com.google.firebase.storage.StorageReference) {
+actual class StorageReference constructor(val android: com.google.firebase.storage.StorageReference) {
 
     actual val name: String
         get() = android.name
@@ -156,14 +157,14 @@ actual class StorageReference internal constructor(val android: com.google.fireb
         scope
     )
 
-    actual suspend fun getStream(
+    suspend fun getStream(
         scope: CoroutineScope,
         processor: StreamProcessor?,
-        fallback: IosFallback.Download
+        builder: (FirebaseStorageTask.Download.Stream.() -> Unit)?
     ): FirebaseStorageJob.DownloadJob = FirebaseStorageJob.DownloadJob(
         FirebaseStorageTask.Download.Stream(
-            processor?.let { android.getStream(processor) } ?: android.stream
-        ),
+            processor?.let { android.getStream(processor) } ?: android.stream,
+        ).apply { builder?.invoke(this) },
         jobHandler,
         scope
     )
@@ -198,16 +199,16 @@ actual class StorageReference internal constructor(val android: com.google.fireb
         scope
     )
 
-    actual suspend fun putStream(
+    suspend fun putStream(
         scope: CoroutineScope,
-        inputStream: Any,
+        inputStream: InputStream,
         metadata: StorageMetadata?,
-        fallback: IosFallback.Upload
+        builder: (FirebaseStorageTask.Upload.Stream.() -> Unit)?
     ): FirebaseStorageJob.UploadJob = FirebaseStorageJob.UploadJob(
         FirebaseStorageTask.Upload.Stream(
-            metadata?.let { android.putStream(inputStream as InputStream, it.android) }
-                ?: android.putStream(inputStream as InputStream)
-        ),
+            metadata?.let { android.putStream(inputStream, it.android) }
+                ?: android.putStream(inputStream)
+        ).apply { builder?.invoke(this) },
         jobHandler,
         scope
     )
@@ -215,11 +216,7 @@ actual class StorageReference internal constructor(val android: com.google.fireb
 
 actual typealias StreamProcessor = com.google.firebase.storage.StreamDownloadTask.StreamProcessor
 
-actual class URI internal constructor(val android: Uri) {
-    actual companion object {
-        actual fun fromString(stringUri: String): URI? = URI(Uri.parse(stringUri))
-    }
-}
+
 actual class Data internal constructor(val android: ByteArray)
 actual class Error
 
@@ -284,6 +281,12 @@ actual class StorageMetadata internal constructor(private val internal: com.goog
     }
 
     actual fun getCustomMetadata(key: String): String? = android.getCustomMetadata(key)
+}
+
+actual fun storageMetadata(builder: StorageMetadata.() -> Unit): StorageMetadata {
+    val metadata = StorageMetadata(com.google.firebase.storage.StorageMetadata())
+    metadata.builder()
+    return metadata
 }
 
 actual class ListResult internal constructor(val android: com.google.firebase.storage.ListResult) {
@@ -359,11 +362,30 @@ actual sealed class FirebaseStorageTask {
             override val snapshot: UploadSnapshot
                 get() = UploadSnapshot(internalTask)
         }
-        actual class Stream internal constructor(
+        class Stream internal constructor(
             override val internalTask: com.google.firebase.storage.UploadTask,
         ): Upload() {
+            init {
+                with(internalTask) {
+                    addOnProgressListener { onProgress?.invoke(this@Stream.snapshot) }
+                    addOnPausedListener { onPause?.invoke(this@Stream.snapshot) }
+                    addOnSuccessListener { onSuccess?.invoke(this@Stream.snapshot) }
+                    addOnFailureListener { onFailure?.invoke(it) }
+                    addOnCanceledListener { onCancel?.invoke() }
+                    addOnCompleteListener { onComplete?.invoke(this@Stream) }
+                }
+            }
+
             override val snapshot: UploadSnapshot
                 get() = UploadSnapshot(internalTask)
+
+
+            var onProgress: ((UploadSnapshot) -> Unit)? = null
+            var onPause: ((UploadSnapshot) -> Unit)? = null
+            var onSuccess: ((UploadSnapshot) -> Unit)? = null
+            var onFailure: ((Exception) -> Unit)? = null
+            var onCancel: (() -> Unit)? = null
+            var onComplete: ((Stream) -> Unit)? = null
         }
 
     }
@@ -388,20 +410,40 @@ actual sealed class FirebaseStorageTask {
             }
         }
 
-        actual class Stream internal constructor(
-            override val internalTask: com.google.firebase.storage.StreamDownloadTask
+        class Stream internal constructor(
+            override val internalTask: com.google.firebase.storage.StreamDownloadTask,
         ) : Download() {
-            actual val snapshot: StreamDownloadSnapshot
+
+            init {
+                with(internalTask) {
+                    addOnProgressListener { onProgress?.invoke(this@Stream.snapshot) }
+                    addOnPausedListener { onPause?.invoke(this@Stream.snapshot) }
+                    addOnSuccessListener { onSuccess?.invoke(this@Stream.snapshot) }
+                    addOnFailureListener { onFailure?.invoke(it) }
+                    addOnCanceledListener { onCancel?.invoke() }
+                    addOnCompleteListener { onComplete?.invoke(this@Stream) }
+                }
+            }
+
+            val snapshot: StreamDownloadSnapshot
                 get() = StreamDownloadSnapshot(internalTask)
 
-            actual class StreamDownloadSnapshot internal constructor(
+            var onProgress: ((StreamDownloadSnapshot) -> Unit)? = null
+            var onPause: ((StreamDownloadSnapshot) -> Unit)? = null
+            var onSuccess: ((StreamDownloadSnapshot) -> Unit)? = null
+            var onFailure: ((Exception) -> Unit)? = null
+            var onCancel: (() -> Unit)? = null
+            var onComplete: ((Download.Stream) -> Unit)? = null
+
+
+            class StreamDownloadSnapshot internal constructor(
                 val android: com.google.firebase.storage.StreamDownloadTask
             ): FirebaseStorageSnapshotBase(android) {
-                actual val totalBytes: Long
+                val totalBytes: Long
                     get() = android.snapshot.totalByteCount
-                actual val bytesDownloaded: Long
+                val bytesDownloaded: Long
                     get() = android.snapshot.bytesTransferred
-                actual val stream: Any?
+                val stream: InputStream
                     get() = android.snapshot.stream
             }
         }

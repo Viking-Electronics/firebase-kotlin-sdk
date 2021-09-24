@@ -49,9 +49,9 @@ actual class FirebaseStorage {
         set(value) {}
 
     /** Creates a new StorageReference initialized at the root Firebase Storage location.   */
-    actual fun getReference(): StorageReference {
-        TODO("Not yet implemented")
-    }
+    actual val reference: StorageReference
+        get() = TODO("Not yet implemented")
+
 
     /** Creates a new StorageReference initialized with a child Firebase Storage location.   */
     actual fun getReference(location: String): StorageReference {
@@ -139,10 +139,9 @@ actual class StorageReference {
         TODO("Not yet implemented")
     }
 
-    actual suspend fun getStream(
+    suspend fun getStream(
         scope: CoroutineScope,
         processor: StreamProcessor?,
-        fallback: IosFallback.Download
     ): FirebaseStorageJob.DownloadJob {
         TODO("Not yet implemented")
     }
@@ -166,11 +165,10 @@ actual class StorageReference {
         TODO("Not yet implemented")
     }
 
-    actual suspend fun putStream(
+    suspend fun putStream(
         scope: CoroutineScope,
         inputStream: Any,
         metadata: StorageMetadata?,
-        fallback: IosFallback.Upload
     ): FirebaseStorageJob.UploadJob {
         TODO("Not yet implemented")
     }
@@ -190,7 +188,7 @@ actual class StorageReference {
 
 actual class URI {
     actual companion object {
-        actual fun fromString(stringUri: String): URI? {
+        actual fun fromString(stringUri: String): URI {
             TODO("Not yet implemented")
         }
     }
@@ -325,7 +323,7 @@ actual sealed class FirebaseStorageTask {
                 get() = TODO("Not yet implemented")
         }
 
-        actual class Stream : Upload() {
+        class Stream : Upload() {
             override val snapshot: UploadSnapshot
                 get() = TODO("Not yet implemented")
         }
@@ -347,17 +345,17 @@ actual sealed class FirebaseStorageTask {
             }
         }
 
-        actual class Stream : Download() {
-            actual val snapshot: StreamDownloadSnapshot
+        class Stream : Download() {
+            val snapshot: StreamDownloadSnapshot
                 get() = TODO("Not yet implemented")
 
-            actual class StreamDownloadSnapshot :
+            class StreamDownloadSnapshot :
                 FirebaseStorageSnapshotBase() {
-                actual val totalBytes: Long
+                val totalBytes: Long
                     get() = TODO("Not yet implemented")
-                actual val bytesDownloaded: Long
+                val bytesDownloaded: Long
                     get() = TODO("Not yet implemented")
-                actual val stream: Any?
+                val stream: Any?
                     get() = TODO("Not yet implemented")
             }
         }
@@ -373,4 +371,8 @@ actual val FirebaseStorageException.code: StorageExceptionCode
 
 actual enum class StorageExceptionCode {
     UNKNOWN, OBJECT_NOT_FOUND, BUCKET_NOT_FOUND, PROJECT_NOT_FOUND, QUOTA_EXCEEDED, NOT_AUTHENTICATED, NOT_AUTHORIZED, RETRY_LIMIT_EXCEEDED, INVALID_CHECKSUM, CANCELED
+}
+
+actual fun storageMetadata(builder: StorageMetadata.() -> Unit): StorageMetadata {
+    TODO("Not yet implemented")
 }

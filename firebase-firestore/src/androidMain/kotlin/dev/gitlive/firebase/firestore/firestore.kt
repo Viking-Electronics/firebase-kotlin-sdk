@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationStrategy
 
 @PublishedApi
@@ -397,6 +398,8 @@ actual class QuerySnapshot(val android: com.google.firebase.firestore.QuerySnaps
     actual val documentChanges
         get() = android.documentChanges.map { DocumentChange(it) }
     actual val metadata: SnapshotMetadata get() = SnapshotMetadata(android.metadata)
+    actual val isEmpty: Boolean
+        get() = android.isEmpty
 }
 
 actual class DocumentChange(val android: com.google.firebase.firestore.DocumentChange) {

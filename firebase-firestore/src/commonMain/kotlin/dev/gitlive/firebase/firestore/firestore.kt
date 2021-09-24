@@ -9,6 +9,7 @@ import dev.gitlive.firebase.FirebaseApp
 import dev.gitlive.firebase.FirebaseException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationStrategy
 import kotlin.js.JsName
 
@@ -182,6 +183,7 @@ expect class QuerySnapshot {
     val documents: List<DocumentSnapshot>
     val documentChanges: List<DocumentChange>
     val metadata: SnapshotMetadata
+    val isEmpty: Boolean
 }
 
 expect enum class ChangeType {

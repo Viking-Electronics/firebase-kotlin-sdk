@@ -378,6 +378,8 @@ actual class QuerySnapshot(val js: firebase.firestore.QuerySnapshot) {
     actual val documentChanges
         get() = js.docChanges().map { DocumentChange(it) }
     actual val metadata: SnapshotMetadata get() = SnapshotMetadata(js.metadata)
+    actual val isEmpty: Boolean
+        get() = js.empty
 }
 
 actual class DocumentChange(val js: firebase.firestore.DocumentChange) {

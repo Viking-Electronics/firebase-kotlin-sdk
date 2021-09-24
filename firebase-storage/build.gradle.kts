@@ -109,6 +109,7 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation("com.google.firebase:firebase-storage-ktx:20.0.0")
+                implementation("com.google.android.gms:play-services-tasks:17.1.0")
             }
         }
 

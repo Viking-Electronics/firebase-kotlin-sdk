@@ -73,7 +73,8 @@ actual class FirebaseStorage internal constructor(val ios: cocoapods.FirebaseSto
         }
 
     /** Creates a new StorageReference initialized at the root Firebase Storage location.   */
-    actual fun getReference(): StorageReference = StorageReference(ios.reference())
+    actual val reference: StorageReference
+        get() = StorageReference(ios.reference())
 
     /** Creates a new StorageReference initialized with a child Firebase Storage location.   */
     actual fun getReference(location: String): StorageReference = StorageReference(ios.referenceWithPath(location))
@@ -173,13 +174,6 @@ actual class StorageReference internal constructor(val ios: cocoapods.FirebaseSt
         scope
     )
 
-    actual suspend fun getStream(
-        scope: CoroutineScope,
-        processor: StreamProcessor?,
-        fallback: IosFallback.Download
-    ): FirebaseStorageJob.DownloadJob = FirebaseStorageJob.DownloadJob(fallback.task, jobHandler, scope)
-
-
 
     actual suspend fun putData(
         scope: CoroutineScope,
@@ -217,22 +211,11 @@ actual class StorageReference internal constructor(val ios: cocoapods.FirebaseSt
         jobHandler,
         scope
     )
-
-    actual suspend fun putStream(
-        scope: CoroutineScope,
-        inputStream: Any,
-        metadata: StorageMetadata?,
-        fallback: IosFallback.Upload
-    ): FirebaseStorageJob.UploadJob = FirebaseStorageJob.UploadJob(fallback.task, jobHandler, scope)
 }
 
 actual interface StreamProcessor
 
-actual class URI internal constructor(val ios: NSURL) {
-    actual companion object {
-        actual fun fromString(stringUri: String): URI? = NSURL.URLWithString(stringUri)?.let { URI(it) }
-    }
-}
+
 
 actual class Error internal constructor(val ios: NSError)
 actual class Data internal constructor(val ios: NSData)
@@ -323,12 +306,6 @@ actual sealed class FirebaseStorageTask {
             override val snapshot: UploadSnapshot
                 get() = UploadSnapshot(ios)
         }
-        actual class Stream: Upload() {
-            init { throw UnsupportedOperationException("Stream upload not supported on this platform") }
-            override val snapshot: UploadSnapshot = UploadSnapshot(null)
-            override val controller: FIRStorageTaskManagementProtocol? = null
-        }
-
     }
 
     actual sealed class Download : FirebaseStorageTask() {
@@ -350,22 +327,6 @@ actual sealed class FirebaseStorageTask {
                     get() = ios.snapshot.progress?.totalUnitCount ?: -1L
                 actual val bytesDownloaded: Long
                     get() = ios.snapshot.progress?.completedUnitCount ?: -1L
-            }
-        }
-
-        actual class Stream : Download() {
-            init { throw UnsupportedOperationException("Stream download not supported on this platform") }
-            override val controller: FIRStorageTaskManagementProtocol? = null
-            actual val snapshot: StreamDownloadSnapshot = StreamDownloadSnapshot()
-
-            actual class StreamDownloadSnapshot:
-                FirebaseStorageSnapshotBase(null) {
-                actual val totalBytes: Long
-                    get() = -1L
-                actual val bytesDownloaded: Long
-                    get() = -1L
-                actual val stream: Any?
-                    get() = null
             }
         }
     }
@@ -468,4 +429,10 @@ suspend inline fun <T> await(function: (callback: (NSError?) -> Unit) -> T): T {
     }
     job.await()
     return result
+}
+
+actual fun storageMetadata(builder: StorageMetadata.() -> Unit): StorageMetadata {
+    val metadata = StorageMetadata(FIRStorageMetadata())
+    metadata.builder()
+    return metadata
 }
